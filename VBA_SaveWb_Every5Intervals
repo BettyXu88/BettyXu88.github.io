@@ -1,0 +1,22 @@
+    ' ... [Your existing code before the loop]
+
+    ' Counter initialization
+    Dim counter As Integer
+    counter = 0
+
+    For Each id_key In idDic.Keys
+        rowlist = Split(idDic(id_key), ",")
+
+        Call Run_Attach_OAFC_Loop(wsNameInsured, rowlist)
+
+        ' Increment the counter
+        counter = counter + 1
+
+        ' Check if the counter is a multiple of 5
+        If counter Mod 5 = 0 Then
+            MasterWb.Save
+            func_Log ("*****" & Now & " Partial Save after processing 5 items.")
+        End If
+    Next id_key
+
+    ' ... [Rest of your code]
