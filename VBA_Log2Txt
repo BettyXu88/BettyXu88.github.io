@@ -1,0 +1,28 @@
+Sub Log2Txt(msg As String, Optional msg_level As Integer = 0)
+
+    If IsEmpty(msg) Or IsNull(msg) Then Exit Sub
+    
+    ' Define constants for logging levels
+    Const LOG_TO_FILE As Integer = 0
+    Const LOG_TO_IMMEDIATE As Integer = 1
+
+    Dim Path As String, fln As String, txt As String
+
+    ' Set the path and filename
+    fln = Format(Date, "mm-dd-yyyy") & ".txt"
+    Path = ThisWorkbook.Path & "\Log\"
+    Call CreateFolderIfNotExists(Path)
+    
+    ' Format the timestamp and message
+    txt = Format(Now, "yyyy-mm-dd HH:nn:ss") & " ==> " & msg
+
+    ' Check logging level
+    Select Case msg_level
+        Case LOG_TO_FILE
+            Open Path & fln For Append As #1
+            Print #1, txt
+            Close #1
+        Case LOG_TO_IMMEDIATE
+            Debug.Print txt
+    End Select
+End Sub
