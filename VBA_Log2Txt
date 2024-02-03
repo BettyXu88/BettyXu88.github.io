@@ -26,3 +26,26 @@ Sub Log2Txt(msg As String, Optional msg_level As Integer = 0)
             Debug.Print txt
     End Select
 End Sub
+Private Sub CreateFolderIfNotExists(folderPath)
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    
+   
+    If Not fso.FolderExists(folderPath) Then
+        Call CreateParentFolder(fso.GetParentFolderName(folderPath))
+        fso.CreateFolder folderPath
+    End If
+End Sub
+
+Private Sub CreateParentFolder(parentFolderPath As String)
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    
+  
+    If Not fso.FolderExists(parentFolderPath) Then
+        
+        CreateParentFolder fso.GetParentFolderName(parentFolderPath)
+        
+        fso.CreateFolder parentFolderPath
+    End If
+End Sub
