@@ -1,0 +1,13 @@
+Hi Susan,
+
+Here are some updates and refinements for our automation tools.
+
+1.	2nd-in Automation
+Use “ - ” as splitter to get broker information from the Clearance report. I did not create new automation version as it is a mirror update, I updated the code on the current automation tool in this folder.
+2.	OFAC Automation
+I created a Log sub folder in our automaton folder (OFAC folder). Automation will create a txt file named with processing date in it and write logs into the txt file. To avoid the pop-up message caused by server upgrade, automation will save the master template after every 5 intervals. I updated the new master template path on the General Tool in this folder, please let division leaders to test it tomorrow.
+
+Feel free to let me know if you have any questions.
+
+Thanks,
+Betty
