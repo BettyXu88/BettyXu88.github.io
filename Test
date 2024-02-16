@@ -1,0 +1,5 @@
+Dear sisters,
+
+I have modified the OFAC automation per our alignments. Please use the new general tool to create ES and Others master sheets.
+
+Automation will process and audit only the current division lines per the master sheet name. For example, if the master sheet is named as “ES” then only lines with ES Division will be processed. Similarly for Others, automation will only process NOT ES lines. 
