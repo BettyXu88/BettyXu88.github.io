@@ -1,26 +1,55 @@
-Function GetDeclineIndex(cmbDeclineTypeValue As String, cmbDeclineReasonValue As String) As Integer
-    Dim ws As Worksheet
-    Set ws = ThisWorkbook.Sheets("Decline Reference") ' Adjust the sheet name if necessary
+Private Sub Btn_DraftEmail_Click()
+
+ Dim controlNumber As String
+    controlNumber = GetControlNumber()
+End Sub
+Function GetControlNumber() As String
+    ' 定义变量用于保存合并后的controlNumber
+    Dim controlNumber As String
+    Dim controlCount As Integer
+    Dim lobName As String
+    Dim controlValue As String
+    Dim controlArray() As String ' 用于存储每个Control#和LOB的组合
+    Dim i As Integer
     
-    Dim lastRow As Long
-    lastRow = ws.Cells(ws.Rows.Count, "B").End(xlUp).Row ' Get the last row in column B
+    ' 初始化controlNumber为空字符串
+    controlNumber = ""
+    ' 初始化controlCount为0
+    controlCount = 0
     
-    ' If the Decline Type is "Decline Request from UW", return 1
-    If cmbDeclineTypeValue = "Decline Request from UW" Then
-        GetDeclineIndex = 1
-        Exit Function
+    ' 循环遍历UserForm中Frame_Layout框架内的所有控件
+    Dim ctrl As Control
+    For Each ctrl In Me.Frame_Layout.Controls
+        ' 检查控件是否为TextBox，并且其名称包含"Control"
+        If TypeName(ctrl) = "TextBox" And InStr(ctrl.Name, "Control#") > 0 Then
+            ' 暂时保存Control#的值
+            controlValue = ctrl.Text
+            ' 如果Control#有值，则增加controlCount计数
+            If controlValue <> "" Then
+                controlCount = controlCount + 1
+                ' 根据controlCount重新调整数组大小
+                ReDim Preserve controlArray(1 To controlCount)
+                ' 存储Control#的值
+                controlArray(controlCount) = controlValue
+            End If
+        End If
+    Next ctrl
+    
+    ' 如果controlCount大于1，则需要为每个Control#添加LOB信息
+    If controlCount > 1 Then
+        For i = 1 To controlCount
+            ' 获取对应的LOB名称
+            lobName = Me.Frame_Layout.Controls("LOB_" & i).Value
+            ' 为每个Control#添加LOB信息
+            controlArray(i) = controlArray(i) & " (" & lobName & ")"
+        Next i
     End If
     
-    ' Loop through the Decline Reasons in column B
-    Dim i As Long
-    For i = 2 To lastRow
-        If ws.Cells(i, "B").Value = cmbDeclineReasonValue Then
-            ' If a match is found, return the corresponding Email Template Index from column D
-            GetDeclineIndex = ws.Cells(i, "D").Value
-            Exit Function
-        End If
-    Next i
+    ' 使用Join函数合并数组元素来构建controlNumber字符串
+    If controlCount > 0 Then
+        controlNumber = Join(controlArray, " & ")
+    End If
     
-    ' If no match is found, return 0 or an appropriate error value
-    GetDeclineIndex = 0
+    ' 返回合并后的controlNumber
+    GetControlNumber = controlNumber
 End Function
