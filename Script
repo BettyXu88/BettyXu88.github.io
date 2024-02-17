@@ -1,0 +1,30 @@
+Function GetDeclineIndex(cmbDeclineTypeValue As String, cmbDeclineReasonValue As String) As Integer
+    ' 定义工作表变量
+    Dim ws As Worksheet
+    ' 设置工作表为"Decline Reference"，根据实际情况调整工作表名称
+    Set ws = ThisWorkbook.Sheets("Decline Reference")
+    
+    ' 定义并获取最后一行的行号
+    Dim lastRow As Long
+    lastRow = ws.Cells(ws.Rows.Count, "B").End(xlUp).Row
+    
+    ' 如果下拉框类型值为"Decline Request from UW"，则返回1
+    If cmbDeclineTypeValue = "Decline Request from UW" Then
+        GetDeclineIndex = 1
+        Exit Function
+    End If
+    
+    ' 循环遍历B列的拒绝原因
+    Dim i As Long
+    For i = 2 To lastRow
+        ' 如果找到匹配的拒绝原因
+        If ws.Cells(i, "B").Value = cmbDeclineReasonValue Then
+            ' 返回匹配行的D列的值（邮件模板索引）
+            GetDeclineIndex = ws.Cells(i, "D").Value
+            Exit Function
+        End If
+    Next i
+    
+    ' 如果没有找到匹配的原因，返回0或适当的错误值
+    GetDeclineIndex = 0
+End Function
