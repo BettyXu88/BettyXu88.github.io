@@ -1,55 +1,62 @@
-Private Sub Btn_DraftEmail_Click()
-
- Dim controlNumber As String
-    controlNumber = GetControlNumber()
-End Sub
-Function GetControlNumber() As String
+Function GetControlNumber2() As String
     ' 定义变量用于保存合并后的controlNumber
     Dim controlNumber As String
-    Dim controlCount As Integer
-    Dim lobName As String
-    Dim controlValue As String
+    Dim secondInControlCount As Integer
+    Dim notAppointedControlCount As Integer
     Dim controlArray() As String ' 用于存储每个Control#和LOB的组合
     Dim i As Integer
-    
-    ' 初始化controlNumber为空字符串
+
+    ' 初始化变量
     controlNumber = ""
-    ' 初始化controlCount为0
-    controlCount = 0
-    
+    secondInControlCount = 0
+    notAppointedControlCount = 0
+
     ' 循环遍历UserForm中Frame_Layout框架内的所有控件
     Dim ctrl As Control
     For Each ctrl In Me.Frame_Layout.Controls
-        ' 检查控件是否为TextBox，并且其名称包含"Control"
-        If TypeName(ctrl) = "TextBox" And InStr(ctrl.Name, "Control#") > 0 Then
-            ' 暂时保存Control#的值
-            controlValue = ctrl.Text
-            ' 如果Control#有值，则增加controlCount计数
-            If controlValue <> "" Then
-                controlCount = controlCount + 1
-                ' 根据controlCount重新调整数组大小
-                ReDim Preserve controlArray(1 To controlCount)
-                ' 存储Control#的值
-                controlArray(controlCount) = controlValue
+        ' 检查控件是否为TextBox，并且其名称包含"2nd in Control#"或"Not Appointed Control#"
+        If TypeName(ctrl) = "TextBox" Then
+            If InStr(ctrl.Name, "2nd in Control#") > 0 And ctrl.Text <> "" Then
+                ' 增加secondInControlCount计数
+                secondInControlCount = secondInControlCount + 1
+            ElseIf InStr(ctrl.Name, "Not Appointed Control#") > 0 And ctrl.Text <> "" Then
+                ' 增加notAppointedControlCount计数
+                notAppointedControlCount = notAppointedControlCount + 1
             End If
         End If
     Next ctrl
-    
-    ' 如果controlCount大于1，则需要为每个Control#添加LOB信息
-    If controlCount > 1 Then
-        For i = 1 To controlCount
-            ' 获取对应的LOB名称
-            lobName = Me.Frame_Layout.Controls("LOB_" & i).Value
-            ' 为每个Control#添加LOB信息
-            controlArray(i) = controlArray(i) & " (" & lobName & ")"
-        Next i
-    End If
-    
+
+    ' 重新定义数组大小
+    ReDim controlArray(1 To secondInControlCount + notAppointedControlCount)
+
+    ' 再次循环以获取控件值和对应LOB
+    For i = 1 To secondInControlCount + notAppointedControlCount
+        If i <= secondInControlCount Then
+            ' 获取2nd in Control# 和 2nd in LOB的值
+            controlValue = Me.Frame_Layout.Controls("2nd in Control#_" & i).Text
+            lobName = Me.Frame_Layout.Controls("2nd in LOB_" & i).Value
+        Else
+            ' 获取Not Appointed Control# 和 Not Appointed LOB的值
+            controlValue = Me.Frame_Layout.Controls("Not Appointed Control#_" & (i - secondInControlCount)).Text
+            lobName = Me.Frame_Layout.Controls("Not Appointed LOB_" & (i - secondInControlCount)).Value
+        End If
+
+        ' 如果控件有值，则构建对应字符串
+        If controlValue <> "" Then
+            ' 如果总数大于1，则每个Control#后面都要添加LOB信息
+            If secondInControlCount + notAppointedControlCount > 1 Then
+                controlArray(i) = controlValue & " (" & lobName & ")"
+            Else
+                controlArray(i) = controlValue
+            End If
+        End If
+    Next i
+
     ' 使用Join函数合并数组元素来构建controlNumber字符串
-    If controlCount > 0 Then
+    If secondInControlCount + notAppointedControlCount > 0 Then
         controlNumber = Join(controlArray, " & ")
     End If
-    
+
     ' 返回合并后的controlNumber
-    GetControlNumber = controlNumber
+    GetControlNumber2 = controlNumber
 End Function
