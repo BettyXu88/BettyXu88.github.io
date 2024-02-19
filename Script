@@ -1,19 +1,29 @@
-
-
-function Get-DownloadsFolderPathFromRegistry {
-    $registryPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders"
-    $valueName = "{374DE290-123F-4565-9164-39C4925E467B}"
-    $downloadsFolderPath = (Get-ItemProperty -Path $registryPath -Name $valueName).$valueName
-
-    # 展开可能存在的环境变量引用
-    $expandedPath = [Environment]::ExpandEnvironmentVariables($downloadsFolderPath)
-
-    # 移除字符串两端的空格
-    $trimmedPath = $expandedPath.Trim()
-
-    return $trimmedPath
-}
-
-$downloadsPath = Get-DownloadsFolderPathFromRegistry
-Write-Host "$downloadsPath"
+Function GetEmailAddressesByControlName(ControlName As String, EAddress_Config As Scripting.Dictionary) As String
+    Dim ctrl As Control
+    Dim UWAbbrev As String
+    Dim emailAddress As String
+    Dim emailAddresses As Scripting.Dictionary
+    Set emailAddresses = New Scripting.Dictionary
+    
+    ' 循环遍历Frame_Layout中的每个控件
+    For Each ctrl In Frame_Layout.Controls
+        ' 检查控件类型是否为ComboBox且名称包含传入的ControlName
+        If TypeName(ctrl) = "ComboBox" And InStr(ctrl.Name, ControlName) > 0 Then
+            ' 获取ComboBox的值（UW的缩写）
+            UWAbbrev = ctrl.Value
+            ' 检查缩写是否在EAddress_Config字典中
+            If EAddress_Config.Exists(UWAbbrev) Then
+                ' 从EAddress_Config字典中获取电子邮件地址
+                emailAddress = Split(EAddress_Config(UWAbbrev), "|")(1)
+                ' 如果电子邮件地址尚未添加到emailAddresses字典中，则添加它
+                If Not emailAddresses.Exists(emailAddress) Then
+                    emailAddresses.Add emailAddress, emailAddress
+                End If
+            End If
+        End If
+    Next ctrl
+    
+    ' 将字典中的电子邮件地址合并为一个字符串，用分号隔开
+    GetEmailAddressesByControlName = Join(emailAddresses.Keys, ";")
+End Function
 
