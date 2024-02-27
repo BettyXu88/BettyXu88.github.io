@@ -47,9 +47,15 @@ Function GetLOBListByControlName(ControlName As String) As String
     
     ' 根据LOB的数量决定如何组合LOB信息
     If lobList.Count > 0 Then
-        combinedLOB = lobList(1) ' 先添加第一个LOB
-        For i = 2 To lobList.Count ' 从第二个开始遍历
-            combinedLOB = combinedLOB & " & " & lobList(i) ' 使用"&"连接后续的LOB
+        For i = 1 To lobList.Count
+            ' 检查当前项是否为空，如果不为空，则加入到combinedLOB
+            If lobList(i) <> "" Then
+                If combinedLOB = "" Then
+                    combinedLOB = lobList(i) ' 第一个非空LOB
+                Else
+                    combinedLOB = combinedLOB & " & " & lobList(i) ' 使用"&"连接后续的非空LOB
+                End If
+            End If
         Next i
     End If
     
