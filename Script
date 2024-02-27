@@ -145,3 +145,52 @@ Function GetLOB_UW() As String
     GetLOB_UW = lobUWInfo
 End Function
 
+---------------------------------------------------------------------------------------------------------------------------------
+Function GetLOB_UW(EAddress_Config As Scripting.Dictionary) As String
+    ' 定义变量
+    Dim lobUWString As String
+    Dim lobCount As Integer
+    Dim lobName As String
+    Dim uwAbbrev As String
+    Dim uwName As String
+    Dim lobUWArray() As String
+    Dim i As Integer
+    
+    ' 初始化变量
+    lobUWString = ""
+    lobCount = 0
+    
+    ' 循环遍历UserForm中Frame_Layout框架内的所有控件
+    Dim ctrl As Control
+    For Each ctrl In Me.Frame_Layout.Controls
+        ' 检查控件是否为ComboBox，并且其名称包含"LOB"
+        If TypeName(ctrl) = "ComboBox" And InStr(ctrl.Name, "LOB") > 0 Then
+            ' 获取LOB名称
+            lobName = ctrl.Text
+            ' 寻找对应的UW控件，并获取UW的缩写
+            uwAbbrev = Me.Frame_Layout.Controls("UW_" & Right(ctrl.Name, Len(ctrl.Name) - Len("LOB"))).Text
+            
+            ' 如果UW不是空，并且缩写在EAddress_Config中存在，则处理UW名称
+            If uwAbbrev <> "" And EAddress_Config.Exists(uwAbbrev) Then
+                ' 从EAddress_Config获取实际的UW名称
+                uwName = Split(EAddress_Config(uwAbbrev), "|")(0)
+                
+                ' 增加LOB计数
+                lobCount = lobCount + 1
+                ' 调整数组大小以存储新的LOB-UW字符串
+                ReDim Preserve lobUWArray(1 To lobCount)
+                
+                ' 格式化LOB和UW的信息字符串
+                lobUWArray(lobCount) = "For " & lobName & " coverage the underwriter assigned is " & uwName
+            End If
+        End If
+    Next ctrl
+    
+    ' 如果有多个LOB和UW信息，则使用换行符连接它们；如果只有一个，则直接赋值
+    If lobCount > 0 Then
+        lobUWString = Join(lobUWArray, vbCrLf)
+    End If
+    
+    ' 返回最终的LOB和UW信息字符串
+    GetLOB_UW = lobUWString
+End Function
