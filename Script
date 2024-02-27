@@ -45,15 +45,13 @@ Function GetLOBListByControlName(ControlName As String) As String
         End If
     Next ctrl
     
-    ' 将集合中的LOB信息组合成一个字符串
-    Dim i As Integer
-    For i = 1 To lobList.Count
-        If combinedLOB = "" Then
-            combinedLOB = lobList(i)
-        Else
-            combinedLOB = combinedLOB & " & " & lobList(i)
-        End If
-    Next i
+    ' 根据LOB的数量决定如何组合LOB信息
+    If lobList.Count > 0 Then
+        combinedLOB = lobList(1) ' 先添加第一个LOB
+        For i = 2 To lobList.Count ' 从第二个开始遍历
+            combinedLOB = combinedLOB & " & " & lobList(i) ' 使用"&"连接后续的LOB
+        Next i
+    End If
     
     ' 返回组合后的LOB信息字符串
     GetLOBListByControlName = combinedLOB
