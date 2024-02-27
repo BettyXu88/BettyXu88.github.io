@@ -62,3 +62,53 @@ Function GetLOBListByControlName(ControlName As String) As String
     ' 返回组合后的LOB信息字符串
     GetLOBListByControlName = combinedLOB
 End Function
+-----------------------------------------------------------------------------------------------------------------------------------
+Function GetControlNumber_3()
+' Layout 3,4; Reseult: 1. Control#_1 for single line or 2. Control#_1(LOB_1) & Control#_2(LOB_2) for multi lines
+  ' ????????????controlNumber
+            Dim controlNumber As String
+            Dim controlCount As Integer
+            Dim lobName As String
+            Dim controlValue As String
+            Dim controlArray() As String ' ??????Control#?LOB???
+            Dim i As Integer
+            
+            ' ???controlNumber?????
+            controlNumber = ""
+            ' ???controlCount?0`
+            controlCount = 0
+            
+            ' ????UserForm?Frame_Layout????????
+            Dim ctrl As Control
+            For Each ctrl In Me.Frame_Layout.Controls
+                ' ???????TextBox,???????"Control"
+                If TypeName(ctrl) = "TextBox" And InStr(ctrl.Name, "Control#") > 0 Then
+                    ' ????Control#??
+                    controlValue = ctrl.Text
+                    ' ??Control#??,???controlCount??
+                    If controlValue <> "" Then
+                        controlCount = controlCount + 1
+                        ' ??controlCount????????
+                        ReDim Preserve controlArray(1 To controlCount)
+                        ' ??Control#??
+                        controlArray(controlCount) = controlValue
+                    End If
+                End If
+            Next ctrl
+            
+            ' ??controlCount??1,??????Control#??LOB??
+            If controlCount > 1 Then
+                For i = 1 To controlCount
+                    ' ?????LOB??
+                    lobName = Me.Frame_Layout.Controls("Cleared LOB_" & i).Value
+                    ' ???Control#??LOB??
+                    controlArray(i) = controlArray(i) & "(" & lobName & ")"
+                Next i
+            End If
+            
+            ' ??Join???????????controlNumber???
+            If controlCount > 0 Then
+                controlNumber = Join(controlArray, " & ")
+            End If
+            GetControlNumber_3 = controlNumber
+End Function
