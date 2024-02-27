@@ -112,3 +112,36 @@ Function GetControlNumber_3()
             End If
             GetControlNumber_3 = controlNumber
 End Function
+
+--------------------------------------------------------------------------------------------------------------------------------
+Function GetLOB_UW() As String
+    Dim ctrl As Control
+    Dim lobUWInfo As String
+    Dim lobName As String
+    Dim uwName As String
+    Dim controlCount As Integer
+    
+    lobUWInfo = ""
+    controlCount = 0
+    
+    ' 遍历UserForm中的Frame_Layout控件
+    For Each ctrl In Me.Frame_Layout.Controls
+        ' 检查是否为TextBox且名称中包含"LOB"
+        If TypeName(ctrl) = "TextBox" And InStr(ctrl.Name, "LOB") > 0 Then
+            controlCount = controlCount + 1 ' 统计LOB的数量
+            lobName = ctrl.Text ' 获取LOB的名称
+            ' 根据LOB控件名称获取对应的UW控件名称和值
+            uwName = Me.Frame_Layout.Controls("UW_" & Mid(ctrl.Name, 5)).Text
+            
+            ' 格式化输出信息
+            If lobUWInfo = "" Then
+                lobUWInfo = "For " & lobName & " coverage the underwriter assigned is " & uwName
+            Else
+                lobUWInfo = lobUWInfo & vbCrLf & "For " & lobName & " coverage the underwriter assigned is " & uwName
+            End If
+        End If
+    Next ctrl
+    
+    GetLOB_UW = lobUWInfo
+End Function
+
