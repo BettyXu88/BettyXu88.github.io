@@ -27,3 +27,34 @@ Function GetEmailAddressesByControlName(ControlName As String, EAddress_Config A
     GetEmailAddressesByControlName = Join(emailAddresses.Keys, ";")
 End Function
 
+------------------------------------------------------------------------------------------------------------------------
+Function GetLOBListByControlName(ControlName As String) As String
+    Dim ctrl As Control
+    Dim combinedLOB As String
+    Dim lobList As Collection
+    Set lobList = New Collection
+    
+    ' 循环遍历Frame_Layout中的每个控件
+    For Each ctrl In Frame_Layout.Controls
+        ' 检查控件类型是否为ComboBox且名称包含传入的ControlName
+        If TypeName(ctrl) = "ComboBox" And InStr(ctrl.Name, ControlName) > 0 Then
+            ' 将LOB信息添加到集合中，避免重复
+            On Error Resume Next ' 忽略错误，用于处理尝试添加重复项到集合中的情况
+            lobList.Add ctrl.Value, ctrl.Value ' 使用LOB值作为键和项
+            On Error GoTo 0 ' 恢复正常的错误处理
+        End If
+    Next ctrl
+    
+    ' 将集合中的LOB信息组合成一个字符串
+    Dim i As Integer
+    For i = 1 To lobList.Count
+        If combinedLOB = "" Then
+            combinedLOB = lobList(i)
+        Else
+            combinedLOB = combinedLOB & " & " & lobList(i)
+        End If
+    Next i
+    
+    ' 返回组合后的LOB信息字符串
+    GetLOBListByControlName = combinedLOB
+End Function
