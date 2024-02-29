@@ -194,3 +194,16 @@ Function GetLOB_UW(EAddress_Config As Scripting.Dictionary) As String
     ' 返回最终的LOB和UW信息字符串
     GetLOB_UW = lobUWString
 End Function
+
+
+Hi Girls,
+
+I updated the Letters Automation Tool per our alignments. Please test the new version and let me know if any questions.
+
+Updates on the automation: 
+1.	Change Assigned UW drop-down options with Underwriter Abbrev. 
+2.	Merge step 2 & 3 into one button on 2nd-in sheet. Please modify the Process Step and instructions by your side.
+3.	Add Draft Decline Letter button on 2nd-in sheet.
+
+Thanks,
+Betty
