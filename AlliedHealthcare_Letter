@@ -1,0 +1,434 @@
+Public olForward As Outlook.MailItem
+Public Reference_Config As Object
+Public DecReason_Config As Object
+
+
+Sub Draft_Allied_Healthcare_ACK_DEC_Letter()
+'Logic:  Locate email per subject --> check ACK or DEC letter --> forward --> Get Broker Email (from) and cc (same domain extract from CC & To)  --> Update different mail body
+
+Dim ws As Worksheet
+Set ws = ThisWorkbook.Sheets("Sheet1")
+
+Dim Reference_ws As Worksheet
+Set Reference_ws = ThisWorkbook.Sheets("Reference")
+Set Reference_Config = Create_ReferenceConfig(Reference_ws)
+
+Dim DecReason_ws As Worksheet
+Set DecReason_ws = ThisWorkbook.Sheets("Decline Reason")
+Set DecReason_Config = Create_DecReasonConfig(DecReason_ws)
+
+' Get EmailSubject, UW, Decline Reason, Description
+Locate_EmailSubject = Trim(ws.[B7].Value)
+UW = Trim(ws.[C7].Value)
+DeclineReason = Trim(ws.[D7].Value)
+DeclineDescription = Trim(ws.[E7].Value)
+    If DeclineReason = "Class of Business" And DeclineDescription = "" Then
+        MsgBox "Decline Description is missing, please enter this information and try again."
+        Exit Sub
+    End If
+
+
+' Check ACK or DEC Letter
+    If DeclineReason = "" Then
+        indicator = 1 ' ACK Letter
+        EmailTemplate = Trim(Reference_ws.[e2].Value)
+
+    Else
+        indicator = 2 ' DEC Letter
+        EmailTemplate = DecReason_Config(DeclineReason)
+    End If
+
+
+
+
+' Get Email From & cc
+     Call FindAndForwardEmail(Locate_EmailSubject, EmailTemplate, Reference_Config, UW, indicator, DeclineReason, DeclineDescription)
+
+
+Set olForward = Nothing
+Set Reference_Config = Nothing
+Set DecReason_Config = Nothing
+
+
+
+End Sub
+
+
+Private Sub FindAndForwardEmail(Locate_EmailSubject, EmailTemplate, Reference_Config, UW, indicator, DeclineReason, DeclineDescription)
+
+    Dim olApp As Outlook.Application
+    Dim olNS As Outlook.Namespace
+    Dim olFolder As Outlook.MAPIFolder
+    Dim olPendingFolder As Outlook.MAPIFolder
+    Dim olMail As Outlook.MailItem
+    Dim MailBody As String
+    Dim olItem As Object
+    Dim olOldestMail As Outlook.MailItem
+
+    'Initialize Outlook
+    Set olApp = New Outlook.Application
+    Set olNS = olApp.GetNamespace("MAPI")
+
+    'Set the mailbox and folder to search for the email
+    Set olFolder = olNS.Folders("Skyward Healthcare Solutions Submissions").Folders("Inbox")
+    Set olPendingFolder = olFolder.Folders("RSP - Pending")
+
+    'Loop through all the items in the Inbox folder
+    For Each olItem In olFolder.Items
+        'Ensure that the item is a Mailitem
+            If TypeName(olItem) = "MailItem" Then
+                Set olMail = olItem
+                        If Trim(olMail.Subject) = Locate_EmailSubject Then 'If the email has the subject
+                            If olOldestMail Is Nothing Then
+                                Set olOldestMail = olMail
+                            ElseIf olMail.ReceivedTime < olOldestMail.ReceivedTime Then
+                                Set olOldestMail = olMail
+                            End If
+                        End If
+            End If
+            
+    Next olItem
+
+   If olOldestMail Is Nothing Then
+        ' No found
+            Set olPendingFolder = olFolder.Folders("RSP - Pending")
+
+                 'Loop through all the items in the Inbox --> RSP - Pending folder
+                    For Each olItem In olPendingFolder.Items
+                        'Ensure that the item is a Mailitem
+                            If TypeName(olItem) = "MailItem" Then
+                                Set olMail = olItem
+                                
+                                        If Trim(olMail.Subject) = Locate_EmailSubject Then 'If the email has the subject
+                                            If olOldestMail Is Nothing Then
+                                                Set olOldestMail = olMail
+                                            ElseIf olMail.ReceivedTime < olOldestMail.ReceivedTime Then
+                                                Set olOldestMail = olMail
+                                            End If
+                                           
+                                        End If
+                            End If
+                            
+                    Next olItem
+
+    End If
+
+ If Not olOldestMail Is Nothing Then
+   aa = Get_Forward_Info(olOldestMail)
+    Set olForward = olOldestMail.Forward
+
+        ' Get EmailFrom, EmailCC and Remove internal discussions on the forward mail body
+            EmailFrom_CC = Return_EmailFrom_CC(olForward)
+               E_From = Split(EmailFrom_CC, "|")(0)
+               E_cc = Split(EmailFrom_CC, "|")(1)
+
+                olForward.htmlbody = aa
+
+                   If E_From = "" Then
+                       MsgBox "Please note we can't locate Broker Email"
+                   Else
+                       E_From_Domain = Split(E_From, "@")(1)
+                       Call Remove_Internal_Discussions(olForward, E_From_Domain, olOldestMail)
+                   End If
+
+                     Call draftemail(olApp, olForward, E_From, E_cc, indicator, EmailTemplate, Reference_Config, UW, DeclineReason, DeclineDescription)
+    End If
+
+
+
+
+
+ 'Clean up
+    Set olOldestMail = Nothing
+    Set olMail = Nothing
+    Set olFolder = Nothing
+    Set olPendingFolder = Nothing
+    Set olNS = Nothing
+    Set olApp = Nothing
+
+
+End Sub
+Private Sub draftemail(olApp, olForward As Outlook.MailItem, EmailTo, Emailcc, indicator, EmailTemplate, Reference_Config, UW, DeclineReason, DeclineDescription)
+Dim olTemplate As Outlook.MailItem
+Set olTemplate = olApp.CreateItemFromTemplate(EmailTemplate)
+'Call WriteHTMLToTextFile(olTemplate.htmlbody, "olTemplate.txt")
+
+UW_EAddress = Split(Reference_Config(UW), "|")(0)
+UW_Gender = Split(Reference_Config(UW), "|")(2)
+UW_Phone = Split(Reference_Config(UW), "|")(1)
+default_cc = "jlundquist@skywardinsurance.com; szhang@skywardinsurance.com; dsun@skywardinsurance.com; "
+
+If InStr(default_cc, UW_EAddress) = 0 Then default_cc = default_cc & UW_EAddress
+
+With olForward
+            If EmailTo = "" Then .To = " " Else .To = EmailTo
+            .CC = Emailcc & "; " & default_cc
+            ' modify mail body
+                If indicator = 1 Then
+                    '.htmlbody = EmailTemplate & .htmlbody
+                    .htmlbody = Replace(Replace(Replace(Replace(olTemplate.htmlbody, "A_UW", UW), "A_Gender", UW_Gender), "A_EmailAddress", UW_EAddress), "A_Phone", UW_Phone) & .htmlbody
+
+                ElseIf DeclineReason = "Class of Business" Then
+                     .htmlbody = Replace(olTemplate.htmlbody, "A_Description", DeclineDescription) & .htmlbody
+                Else
+                    .htmlbody = olTemplate.htmlbody & .htmlbody
+                End If
+
+End With
+'Call WriteHTMLToTextFile(olForward.htmlbody, "2.txt")
+   'Display the
+            olForward.Display
+
+            Set olTemplate = Nothing
+End Sub
+
+Function Create_ReferenceConfig(ws As Worksheet)
+
+Dim Config_Lr As Integer
+Set Dic = CreateObject("scripting.dictionary")
+Config_Lr = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+'Debug.Print "Config Lr: ", Config_Lr
+
+    For k = 2 To Config_Lr
+                Dic(Trim(ws.Cells(k, "A").Value)) = Trim(ws.Cells(k, "B").Value) & "|" & Trim(ws.Cells(k, "C").Value) & "|" & Trim(ws.Cells(k, "D").Value)
+    Next k
+
+ Set Create_ReferenceConfig = Dic
+End Function
+Function Create_DecReasonConfig(ws As Worksheet)
+
+Dim Config_Lr As Integer
+Set Dic = CreateObject("scripting.dictionary")
+Config_Lr = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+'Debug.Print "Config Lr: ", Config_Lr
+
+    For k = 1 To Config_Lr
+                Dic(Trim(ws.Cells(k, "A").Value)) = Trim(ws.Cells(k, "B").Value)
+    Next k
+
+ Set Create_DecReasonConfig = Dic
+End Function
+
+Sub Remove_Internal_Discussions(olForward As Outlook.MailItem, E_From_Domain, olMail)
+
+' Extract the formatting selection from the HTML (before </head>)
+    Dim htmlparts() As String
+    Dim MailBody As String
+    MailBody = olForward.htmlbody
+        htmlparts = Split(olMail.htmlbody, "</head>", -1, vbTextCompare)
+        FormattingHTML = htmlparts(0)
+
+
+    Dim lines() As String
+    Dim line
+    Dim foundEmailFrom As Boolean
+    Dim foundEmailFromIndex As Integer
+
+    MailBody = Replace(Replace(MailBody, "</o:p>", "<br>"), "<BR>", "<br>")
+
+    ' Split the email body into lines
+    'lines = Split(UCase(MailBody), "<BR>")
+     lines = Split(MailBody, "<br>")
+       If UBound(lines) = 0 Then lines = Split(MailBody, "<BR>")
+
+    ' Initialize variables
+
+    foundEmailFrom = False
+    foundEmailFromIndex = -1
+
+    ' Iterate through each line in the email body
+     For i = 0 To UBound(lines)
+
+        line = lines(i)
+        'Debug.Print line
+
+        ' Check if line contains "From:" and does not contain "@skywardinsurance.com"
+        If InStr(UCase(line), "FROM:") > 0 And InStr(line, E_From_Domain) > 0 And InStr(UCase(line), ".COM") > 0 Then
+            ' Extract the email address from
+                'emailFrom = Trim(Mid(line, InStr(line, "<") + 1, InStr(line, ">") - InStr(line, "<") - 1))
+              emailFrom = line
+
+'             ' Check if the  line contains "To:"
+'            If InStr(UCase(lines(i + 2)), "TO:") > 0 Then
+'                ' Extract the email address to
+'                    EmailTo = lines(i + 2)
+'            End If
+'
+'             ' Check if the  line contains "Cc:"
+'            If InStr(UCase(lines(i + 3)), "CC:") > 0 Then
+'                    ' Extract the email address cc
+'                    Emailcc = lines(i + 3)
+'            End If
+'
+'
+'            If InStr(EmailTo, "@skywardinsurance.com") > 0 Or InStr(Emailcc, "@skywardinsurance.com") > 0 Then
+
+                foundEmailFrom = True
+                foundEmailFromIndex = i
+                
+                If foundEmailFromIndex >= 1 Then
+                        If InStr(lines(foundEmailFromIndex - 1), "Original Message") > 0 Then foundEmailFromIndex = foundEmailFromIndex - 1
+                End If
+                    
+                Exit For
+'            End If
+
+        End If
+
+    Next
+
+    Debug.Print "emailFrom? " & emailFrom
+     Debug.Print "emailTo? " & EmailTo
+     Debug.Print "emailCC? " & Emailcc
+
+
+' Delete the lines before the line with email "From" if it was found
+If foundEmailFrom Then
+    Dim tempLines() As String
+    ReDim tempLines(0 To UBound(lines) - foundEmailFromIndex)
+
+    For i = foundEmailFromIndex To UBound(lines)
+        If Trim(lines(i)) <> "" Then tempLines(i - foundEmailFromIndex) = lines(i)
+    Next i
+
+    lines = tempLines
+
+    ' Reconstruct the modified email body
+'emailBody = Join(lines, "<o:p></o:p>")
+     emailBody = Join(lines, "<br>")
+    olForward.htmlbody = FormattingHTML & emailBody
+
+End If
+
+
+End Sub
+
+Sub ClearContents()
+Dim ws As Worksheet
+Set ws = ThisWorkbook.Sheets("Sheet1")
+
+Dim range As range
+
+    For Each range In ws.range(Cells(7, "B"), Cells(7, "E"))
+       range.ClearContents
+
+    Next
+
+End Sub
+
+
+Function Get_Forward_Info(originalMail)
+  ' Combine From, Sent, To, CC, Subject & orginal HTML Body
+
+    Dim senderEmail As String
+    Dim toInfo As String
+    Dim ccInfo As String
+    Dim recipient As recipient
+    Dim recipientEmail As String
+
+    ' Check if the sender's email type is SMTP or EXCHANGE
+    If originalMail.SenderEmailType = "SMTP" Then
+        senderEmail = originalMail.SenderEmailAddress
+    ElseIf originalMail.SenderEmailType = "EX" Then
+        senderEmail = originalMail.Sender.GetExchangeUser.PrimarySmtpAddress
+    Else
+        senderEmail = ""
+    End If
+
+    If senderEmail = "" Then
+        senderEmail = originalMail.Sender.Name
+    Else
+        senderEmail = originalMail.Sender.Name & " &lt;" & senderEmail & "&gt;"
+    End If
+
+
+    ' Collect the To and CC information
+    toInfo = ""
+    ccInfo = ""
+    For Each recipient In originalMail.Recipients
+        ' Check if the recipient's email type is SMTP or EXCHANGE
+        If recipient.AddressEntry.AddressEntryUserType = olSmtpAddressEntry Then
+            recipientEmail = recipient.Address
+        ElseIf recipient.AddressEntry.AddressEntryUserType = olExchangeUserAddressEntry Then
+            recipientEmail = recipient.AddressEntry.GetExchangeUser.PrimarySmtpAddress
+        Else
+            recipientEmail = ""
+        End If
+
+        If recipient.Type = olTo Then
+            If recipientEmail = "" Then
+                toInfo = toInfo & recipient.Name & "; "
+            Else
+                toInfo = toInfo & recipient.Name & " &lt;" & recipientEmail & "&gt;; "
+            End If
+
+        ElseIf recipient.Type = olCC Then
+            If recipientEmail = "" Then
+                ccInfo = ccInfo & recipient.Name & "; "
+            Else
+               ccInfo = ccInfo & recipient.Name & " &lt;" & recipientEmail & "&gt;; "
+            End If
+
+        End If
+    Next recipient
+
+
+    toInfo = Trim(toInfo)
+    If Right(toInfo, 1) = ";" Then toInfo = Left(toInfo, Len(toInfo) - 1)
+    ccInfo = Trim(ccInfo)
+     If Right(ccInfo, 1) = ";" Then ccInfo = Left(ccInfo, Len(ccInfo) - 1)
+
+    If toInfo = "" Then
+         'don 't have To
+             If ccInfo = "" Then
+                'don 't have cc
+                        Get_Forward_Info = "<b>From:</b> " & senderEmail & "<br>" & _
+                           "<b>Sent:</b> " & Format(originalMail.ReceivedTime, "dddd, mmmm dd, yyyy h:nn AMPM") & "<br>" & _
+                           "<b>Subject:</b> " & originalMail.Subject & "<br>"
+                Else
+                'have cc
+                        Get_Forward_Info = "<b>From:</b> " & senderEmail & "<br>" & _
+                       "<b>Sent:</b> " & Format(originalMail.ReceivedTime, "dddd, mmmm dd, yyyy h:nn AMPM") & "<br>" & _
+                       "<b>Cc:</b> " & ccInfo & "<br>" & _
+                       "<b>Subject:</b> " & originalMail.Subject & "<br>"
+                End If
+
+    Else
+     'have To
+            If ccInfo = "" Then
+                'don 't have cc
+                    Get_Forward_Info = "<b>From:</b> " & senderEmail & "<br>" & _
+                       "<b>Sent:</b> " & Format(originalMail.ReceivedTime, "dddd, mmmm dd, yyyy h:nn AMPM") & "<br>" & _
+                       "<b>To:</b> " & toInfo & "<br>" & _
+                       "<b>Subject:</b> " & originalMail.Subject & "<br>"
+            Else
+                'have cc
+                Get_Forward_Info = "<b>From:</b> " & senderEmail & "<br>" & _
+                       "<b>Sent:</b> " & Format(originalMail.ReceivedTime, "dddd, mmmm dd, yyyy h:nn AMPM") & "<br>" & _
+                       "<b>To:</b> " & toInfo & "<br>" & _
+                       "<b>Cc:</b> " & ccInfo & "<br>" & _
+                       "<b>Subject:</b> " & originalMail.Subject & "<br>"
+             End If
+
+
+    End If
+
+    ' Add one space row from he external sender
+    If InStr(UCase(senderEmail), "SKYWARD") = 0 Then Get_Forward_Info = "<div style='border:none;border-top:solid #E1E1E1 1.0pt;padding:3.0pt 0in 0in 0in'>" & Get_Forward_Info & "<br>"
+'    Else
+'        Get_Forward_Info = "<div style='border:none;border-top:solid #E1E1E1 1.0pt;padding:3.0pt 0in 0in 0in'>" & Get_Forward_Info
+'    End If
+
+
+            Get_Forward_Info = Get_Forward_Info & originalMail.htmlbody
+
+
+
+End Function
+
+
+
+
+
+
+
