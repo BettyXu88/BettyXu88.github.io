@@ -196,14 +196,24 @@ Function GetLOB_UW(EAddress_Config As Scripting.Dictionary) As String
 End Function
 
 
-Hi Girls,
+Subject: Updated Version of the Letters Automation Tool for Review
 
-I updated the Letters Automation Tool per our alignments. Please test the new version and let me know if any questions.
+Dear Team,
 
-Updates on the automation: 
-1.	Change Assigned UW drop-down options with Underwriter Abbrev. 
-2.	Merge step 2 & 3 into one button on 2nd-in sheet. Please modify the Process Step and instructions by your side.
-3.	Add Draft Decline Letter button on 2nd-in sheet.
+I hope this message finds you well. I am writing to inform you that the Letters Automation Tool has been updated in accordance with our recent discussions. I kindly request that you test the new version and share any questions or feedback you may have.
 
-Thanks,
+The updates to the automation include:
+
+1. **Underwriter Selection Enhancement:** The Assigned Underwriter (UW) drop-down options have been updated to reflect Underwriter Abbreviations, streamlining the selection process.
+   
+2. **Process Simplification:** Steps 2 and 3 have been consolidated into a single action button on the second input (2nd-in) sheet. Consequently, adjustments to the Process Step and related instructions will need to be made on your end to accommodate this change.
+
+3. **New Feature - Draft Decline Letter:** A 'Draft Decline Letter' button has been added to the 2nd-in sheet, facilitating easier generation of decline letters.
+
+Your cooperation in testing the updated tool and providing feedback is greatly appreciated. Your insights are invaluable in ensuring the tool’s effectiveness and usability.
+
+Thank you for your attention to this update and your ongoing support.
+
+Best Regards,
+
 Betty
