@@ -1,0 +1,21 @@
+// Get the select element by its JS path
+var selectElement = document.querySelector("#company-app > div:nth-child(2) > div.col-md-9 > select");
+
+// Check if the select element exists
+if (selectElement) {
+    // Get all option elements from the select element
+    var options = selectElement.options;
+
+    // Create an array to hold the option names
+    var optionNames = [];
+
+    // Loop through the options and add their text to the array
+    for (var i = 0; i < options.length; i++) {
+        optionNames.push(options[i].text);
+    }
+
+    // Output the array of option names
+    console.log(optionNames);
+} else {
+    console.log("Select element not found");
+}
