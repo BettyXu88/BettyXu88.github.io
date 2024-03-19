@@ -1,53 +1,46 @@
 Sub ExtractMsgHTMLBodyToTextFile()
-    Dim outlookApp As Outlook.Application
-    Dim msg As Outlook.MailItem
-    Dim fd As Office.FileDialog
+    Dim olApp As Object
+    Dim msgFile As Object
+    Dim fd As FileDialog
     Dim selectedFile As String
     Dim fso As Object
     Dim textFile As Object
     Dim htmlBody As String
     Dim textFilePath As String
-    
-    ' 初始化 Outlook 应用
-    Set outlookApp = New Outlook.Application
-    
-    ' 创建文件对话框以选择 .msg 文件
-    Set fd = outlookApp.FileDialog(msoFileDialogFilePicker)
-    
+
+    ' 创建并设置FileDialog对象
+    Set fd = Application.FileDialog(msoFileDialogFilePicker)
     With fd
-        .Title = "请选择一个 Outlook 邮件文件"
+        .Title = "选择一个MSG文件"
         .Filters.Clear
-        .Filters.Add "Outlook 文件", "*.msg"
-        If .Show = -1 Then ' 如果选中了文件
-            selectedFile = .SelectedItems(1) ' 获取文件路径
+        .Filters.Add "Outlook Files", "*.msg"
+        If .Show = -1 Then ' 如果选择了文件
+            selectedFile = .SelectedItems(1)
         Else
-            MsgBox "未选择文件"
+            MsgBox "没有选择文件。"
             Exit Sub
         End If
     End With
+
+    ' 初始化Outlook应用程序
+    Set olApp = CreateObject("Outlook.Application")
     
-    ' 打开选中的 .msg 文件
-    Set msg = outlookApp.Session.OpenSharedItem(selectedFile)
+    ' 打开选择的MSG文件
+    Set msgFile = olApp.CreateItemFromTemplate(selectedFile)
     
-    ' 获取邮件的 HTML 正文
-    htmlBody = msg.HTMLBody
+    ' 获取HTML正文
+    htmlBody = msgFile.HTMLBody
     
-    ' 设置要写入的文本文件路径
-    textFilePath = "C:\Path\To\Your\Directory\emailBody.txt" ' 请修改为实际路径
-    
-    ' 创建 FileSystemObject 以写入文件
+    ' 设置输出文本文件的路径
+    textFilePath = "C:\Path\To\Your\Folder\emailBody.txt" ' 修改为您希望保存的路径
+
+    ' 创建FileSystemObject
     Set fso = CreateObject("Scripting.FileSystemObject")
-    Set textFile = fso.CreateTextFile(textFilePath, True)
     
-    ' 将 HTML 正文写入文件
+    ' 创建文本文件并写入HTML正文
+    Set textFile = fso.CreateTextFile(textFilePath, True)
     textFile.Write htmlBody
     textFile.Close
     
-    MsgBox "HTML 正文已成功写入: " & textFilePath
-    
-    ' 清理
-    Set fso = Nothing
-    Set textFile = Nothing
-    Set msg = Nothing
-    Set outlookApp = Nothing
+    MsgBox "HTML正文已保存到: " & textFilePath
 End Sub
