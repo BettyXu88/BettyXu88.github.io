@@ -1,0 +1,21 @@
+Function HexToRGB(colorHex As String) As Variant
+    Dim red As Integer, green As Integer, blue As Integer
+    
+    ' 移除颜色代码前的 "#" 如果存在
+    colorHex = Replace(colorHex, "#", "")
+    
+    ' 将十六进制值转换为RGB值
+    red = CInt("&H" & Mid(colorHex, 1, 2))
+    green = CInt("&H" & Mid(colorHex, 3, 2))
+    blue = CInt("&H" & Mid(colorHex, 5, 2))
+    
+    ' 返回包含RGB值的数组
+    HexToRGB = Array(red, green, blue)
+End Function
+Sub TestHexToRGB()
+    Dim rgbColor As Variant
+    rgbColor = HexToRGB("#FFA07A")
+    
+    ' 打印RGB值到Immediate窗口
+    Debug.Print "R: " & rgbColor(0) & ", G: " & rgbColor(1) & ", B: " & rgbColor(2)
+End Sub
