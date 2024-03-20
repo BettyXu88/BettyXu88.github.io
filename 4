@@ -1,0 +1,73 @@
+Sub ProcessMailItems3(MailItem As Object, ByRef jsonItems As Collection, ByRef Note As String, EmailRequestType As String)
+    On Error GoTo ErrorHandler
+    ' Log start of sub
+    Debug.Print "Start Sub - ProcessMailItem3"
+    
+    ' Initialize MSHTML to parse HTML content
+    Dim htmlDoc As New MSHTML.HTMLDocument
+    htmlDoc.body.innerHTML = MailItem.HTMLBody
+    
+    ' Find all divs
+    Dim allDivs As MSHTML.IHTMLElementCollection
+    Set allDivs = htmlDoc.getElementsByTagName("div")
+    
+    Dim div As MSHTML.IHTMLElement
+    For Each div In allDivs
+        ' Check if div is a category based on color
+        If InStr(div.style.cssText, "color:#079189") > 0 Then
+            ' Category found, process it
+            Dim CategoryName As String
+            CategoryName = div.innerText
+            Debug.Print "Category: " & CategoryName
+            
+            Dim nextDiv As MSHTML.IHTMLElement
+            Set nextDiv = div.NextSibling
+            
+            ' Initialize variables for details
+            Dim EEName As String
+            Dim CompanyName As String
+            Dim ChangeDetails As String
+            Dim ChangeDateTime As String
+            Dim DetailCount As Integer
+            DetailCount = 0
+            
+            ' Loop through siblings to get details
+            Do While Not nextDiv Is Nothing And DetailCount < 3
+                ' Assuming the first div after category contains EE Name + Company Name
+                ' and the next two divs are Change Details and Change Date Time
+                If nextDiv.tagName = "DIV" And InStr(nextDiv.style.cssText, "color:#226699") > 0 Then
+                    ' EE Name + Company Name found
+                    EEName = nextDiv.innerText
+                    DetailCount = 1
+                ElseIf DetailCount = 1 Then
+                    ' Change Details found
+                    ChangeDetails = nextDiv.innerText
+                    DetailCount = 2
+                ElseIf DetailCount = 2 Then
+                    ' Change Date Time found
+                    ChangeDateTime = nextDiv.innerText
+                    DetailCount = 3
+                    ' All details found, exit loop
+                    Exit Do
+                End If
+                Set nextDiv = nextDiv.NextSibling
+            Loop
+            
+            ' Process extracted details
+            If EEName <> "" And ChangeDetails <> "" And ChangeDateTime <> "" Then
+                ' Add details to collection or process as needed
+                Debug.Print "EEName: " & EEName
+                Debug.Print "CompanyName: " & CompanyName
+                Debug.Print "ChangeDetails: " & ChangeDetails
+                Debug.Print "ChangeDateTime: " & ChangeDateTime
+                ' AddDetailToCollection or other processing...
+            End If
+        End If
+    Next div
+    
+    Exit Sub
+    
+ErrorHandler:
+    Debug.Print "Error: " & Err.Description
+    Resume Next
+End Sub
