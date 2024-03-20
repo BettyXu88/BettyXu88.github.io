@@ -1,0 +1,66 @@
+Sub ProcessMailItems3(MailItem As Object, ByRef jsonItems As Collection, ByRef Note As String, EmailRequestType As String)
+    On Error GoTo ErrorHandler
+    ' Log start of sub
+    Debug.Print "Start Sub - ProcessMailItem3"
+    
+    ' Initialize MSHTML to parse HTML content
+    Dim htmlDoc As New MSHTML.HTMLDocument
+    htmlDoc.body.innerHTML = MailItem.HTMLBody
+    
+    ' Find all categories by color #079189 (you may adjust the logic here to find the correct elements)
+    Dim categories As MSHTML.IHTMLElementCollection
+    Set categories = htmlDoc.getElementsByTagName("div")
+    
+    Dim categoryFound As Boolean
+    categoryFound = False
+    
+    Dim detailsFound As Boolean
+    detailsFound = False
+    
+    Dim i As Long
+    For i = 0 To categories.Length - 1
+        Dim div As MSHTML.IHTMLElement
+        Set div = categories.Item(i)
+        
+        If InStr(1, div.Style.cssText, "color:#079189") > 0 Then
+            ' Found a category
+            categoryFound = True
+            Debug.Print "Found category: " & div.innerText
+            
+            ' Attempt to find details for this category
+            detailsFound = False
+            Dim nextDiv As MSHTML.IHTMLElement
+            For j = i + 1 To categories.Length - 1
+                Set nextDiv = categories.Item(j)
+                
+                ' Check if nextDiv is a detail section based on your criteria
+                If InStr(1, nextDiv.Style.cssText, "color:#226699") > 0 Then
+                    ' Found details related to the category
+                    detailsFound = True
+                    Debug.Print "Found details: " & nextDiv.innerText
+                    ' Create and add detail to jsonItems collection as needed
+                    ' AddDetailToCollection jsonItems, nextDiv, category (as needed)
+                ElseIf InStr(1, nextDiv.Style.cssText, "color:#079189") > 0 Then
+                    ' Found next category, break the loop
+                    Exit For
+                End If
+            Next j
+            
+            If Not detailsFound Then
+                ' No details found for the category, log or handle as needed
+                Debug.Print "No details found for category: " & div.innerText
+            End If
+        End If
+    Next i
+    
+    If Not categoryFound Then
+        ' No categories found, handle as needed
+        Debug.Print "No categories found in the document."
+    End If
+    
+    Exit Sub
+
+ErrorHandler:
+    Debug.Print "Error: " & Err.Description
+    Resume Next
+End Sub
