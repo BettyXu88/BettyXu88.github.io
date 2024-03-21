@@ -1,0 +1,28 @@
+' Write data
+For Each keyitem In headers
+    textFile.Write keyitem & ","
+Next keyitem
+textFile.WriteLine  ' Add a newline to end the headers row
+
+For i = 0 To UBound(headers) - 1
+    If dict.Exists(headers(i)) Then
+        For Each valueitem In dict(headers(i))
+            ' Replace new line characters within valueitem
+            valueitem = Replace(valueitem, vbNewLine, " ")
+            ' Replace comma within valueitem to avoid CSV column misalignment
+            valueitem = Replace(valueitem, ",", ";")
+            ' Encapsulate the value in quotes to handle commas and ensure CSV format
+            valueitem = """" & valueitem & """"
+
+            On Error Resume Next
+            textFile.Write valueitem & ","
+            If Err.Number <> 0 Then
+                ' Write error note into the cell
+                textFile.Write "Error: " & Err.Description & ","
+                Err.Clear
+            End If
+            On Error GoTo ErrorHandler
+        Next valueitem
+        textFile.WriteLine ' Add a newline after each set of values for a header
+    End If
+Next i
