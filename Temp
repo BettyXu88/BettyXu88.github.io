@@ -1,0 +1,12 @@
+
+I updated the Letters Automation Tool per your new requirements. Please test the 0321 version under this folder and share any questions or feedback you may have.
+
+The updates on the automation include: 
+
+1.	Change the font size from 12 to 11 on email templates. You may adjust the format if any changes in the future. All email templates are saved in the Decline Email Templates folder.
+2.	Add one more row for each automation layout to handle more situations.
+3.	Add new decline reason (Submission with LOB Declined due to both 90 Days and Not Appointed)
+
+Thanks,
+Betty
+
